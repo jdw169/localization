@@ -65,7 +65,36 @@ class KinematicCarMotionModel:
         """
         # BEGIN QUESTION 1.1
         "*** REPLACE THIS LINE ***"
-        return np.zeros_like(states, dtype=float)
+
+        delta = controls[:,1]
+        v = controls[:,0]
+        theta = states[:,2]
+
+        small_delta = np.abs(delta) < delta_threshold
+
+        # define delta columns with 0 values 
+        d_x = np.zeros(len(delta))
+        d_y = np.zeros(len(delta))
+        d_theta = np.zeros(len(delta))
+
+        # fill in the delta columns where small-angle formula is used
+        d_x[small_delta] = v[small_delta] * np.cos(theta[small_delta]) * dt
+        d_y[small_delta] = v[small_delta] * np.sin(theta[small_delta]) * dt
+        d_theta[small_delta] = 0
+
+        turning = ~small_delta
+        tan_delta = np.tan(delta[turning])
+
+        # get delta Theta
+        d_theta[turning] = v[turning] * tan_delta * dt / self.car_length
+
+        # get delta x
+        d_x[turning] = self.car_length * (np.sin(theta[turning] + d_theta[turning])- np.sin(theta[turning])) / tan_delta
+
+        # get delta y
+        d_y[turning] = self.car_length * (-np.cos(theta[turning] + d_theta[turning])+ np.cos(theta[turning])) / tan_delta 
+
+        return np.column_stack([d_x, d_y, d_theta])
         # END QUESTION 1.1
 
     def apply_motion_model(self, states, vel, delta, dt):
@@ -93,7 +122,26 @@ class KinematicCarMotionModel:
 
         # Hint: you may find the np.random.normal function useful
         # BEGIN QUESTION 1.2
-        "*** REPLACE THIS LINE ***"
+
+        # get the control with noise
+        vel_noise = np.random.normal(vel, self.vel_std, n_particles)
+        delta_noise = np.random.normal(delta, self.delta_std, n_particles)
+
+        control_noise = np.column_stack([vel_noise, delta_noise])
+
+        # Compute delta for next state
+        states_changes = self.compute_changes(states, control_noise, dt)
+
+        states += states_changes
+        states[:,0] = np.random.normal(states[:,0], self.x_std, n_particles)
+        states[:,1] = np.random.normal(states[:,1], self.y_std, n_particles)
+        states[:,2] = np.random.normal(states[:,2], self.theta_std, n_particles)
+
+        outbounds = ( (states[:,2]<= -np.pi) | (states[:,2]> np.pi))
+        states[outbounds,2] = (states[outbounds,2] + np.pi)% (2*np.pi) - np.pi
+        # states[:,2] = (states[:,2] + np.pi) % (2*np.pi) - np.pi
+        states[states[:, 2] == -np.pi, 2] = np.pi
+
         # END QUESTION 1.2
 
 

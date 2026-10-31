@@ -77,7 +77,25 @@ class SingleBeamSensorModel:
         # Use obs_r and sim_r to vectorize the sensor model precomputation.
         diff = sim_r - obs_r
         # BEGIN QUESTION 2.1
-        "*** REPLACE THIS LINE ***"
+        if self.hit_std >0:
+            prob_hit = (self.z_hit / (self.hit_std * np.sqrt(2 * np.pi)) * 
+                        np.exp(-0.5 * np.square((obs_r-sim_r)/self.hit_std)))
+        else:
+            prob_hit = self.z_hit * (diff == 0).astype(float)
+
+        prob_short = self.z_short * np.where(obs_r < sim_r, 2.0 * diff / np.maximum(sim_r, 1) ** 2, 0.0)
+
+        prob_max = self.z_max * np.where(obs_r == max_r, 1.0, 0.0)
+
+        if max_r > 0:
+            prob_rand = self.z_rand * (obs_r < max_r) / float(max_r)
+        else:
+            prob_rand = 0.0
+
+        prob_table =  prob_hit + prob_short + prob_max + prob_rand 
+        colum_sum = np.sum(prob_table, axis = 0)
+        prob_table = prob_table / colum_sum
+        return prob_table
         # END QUESTION 2.1
 
         return prob_table

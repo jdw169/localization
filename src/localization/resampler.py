@@ -39,5 +39,10 @@ class LowVarianceSampler:
         # https://docs.python.org/3/library/threading.html#using-locks-conditions-and-semaphores-in-the-with-statement
         with self.state_lock:
             # BEGIN QUESTION 3.2
-            "*** REPLACE THIS LINE ***"
+            s = np.random.rand() / self.n_particles
+            sample_interval = s + np.arange(self.n_particles) / self.n_particles
+            cumulative = np.cumsum(self.weights)
+            indice = np.searchsorted(cumulative, sample_interval, side='left', sorter = None)
+            self.particles[:] = self.particles[indice]
+            self.weights[:] = 1/self.n_particles
             # END QUESTION 3.2

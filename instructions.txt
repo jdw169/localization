@@ -1,0 +1,8 @@
+rosrun localization make_sensor_model_single_plot
+roslaunch ee545 teleop.launch map:='$(find ee545)/maps/shapes_world_small.yaml' initial_x:=4.25 initial_y:=5.50 initial_theta:=0
+rosrun localization make_sensor_model_likelihood_plot
+roslaunch ee545 teleop.launch map:='$(find ee545)/maps/maze_0.yaml' initial_x:=-9.6 initial_y:=0 initial_theta:=-2.5
+rosrun rviz rviz -d ~/mushr_ws/src/mushr545/ee545/config/defaut.rviz
+roslaunch localization particle_filter_teleop_sim.launch map:='$(find ee545)/maps/cse2_2.yaml' initial_x:=16 initial_y:=28 initial_theta:=0
+rosrun localization make_particle_filter_plot duration:=60.0
+rostest localization particle_filter.test bag_name:="circle" --text rviz:=true plot:=true
